@@ -11,7 +11,6 @@ const GerenciarUsuarios = () => {
   const [error, setError] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ nome: '', tipo: 'usuario' });
-
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 

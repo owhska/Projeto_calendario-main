@@ -147,6 +147,7 @@ function initializeDatabase() {
       else console.log('✅ Tabela arquivo_logs criada/verificada com sucesso!');
     });
 
+
     // Seed do usuário "system" (evita falha de FK ao criar tarefas automáticas)
     db.get('SELECT uid FROM usuarios WHERE uid = ?', ['system'], (err, row) => {
       if (err) {
