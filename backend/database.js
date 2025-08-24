@@ -536,19 +536,66 @@ function updateTask(taskId, taskData) {
     });
 }
 
-// Função para deletar tarefa
+// Função para deletar tarefa (com limpeza de dependências)
 function deleteTask(taskId) {
-    return new Promise((resolve, reject) => {
-        const sql = `DELETE FROM tarefas WHERE id = ?`;
-        db.run(sql, [taskId], function(err) {
-            if (err) {
-                console.error(`❌ Erro ao deletar tarefa ${taskId}: ${err.message}`);
-                reject(err);
-            } else {
-                console.log(`✅ Tarefa ${taskId} deletada`);
-                resolve({ deletedRows: this.changes });
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log(`🗑️ [DELETE TASK] Iniciando exclusão da tarefa: ${taskId}`);
+            
+            // 1. Buscar e remover arquivos associados
+            const arquivos = await getFilesByTaskId(taskId);
+            console.log(`🗑️ [DELETE TASK] Encontrados ${arquivos.length} arquivos associados`);
+            
+            // Remover arquivos físicos e do banco
+            for (const arquivo of arquivos) {
+                try {
+                    // Remover arquivo físico se existir
+                    const fs = require('fs');
+                    if (fs.existsSync(arquivo.file_path)) {
+                        fs.unlinkSync(arquivo.file_path);
+                        console.log(`🗑️ [DELETE TASK] Arquivo físico removido: ${arquivo.file_path}`);
+                    }
+                    
+                    // Remover do banco
+                    await deleteFile(arquivo.id);
+                    console.log(`🗑️ [DELETE TASK] Arquivo ${arquivo.id} removido do banco`);
+                } catch (fileError) {
+                    console.warn(`⚠️ [DELETE TASK] Erro ao remover arquivo ${arquivo.id}: ${fileError.message}`);
+                    // Continua mesmo se houver erro com um arquivo específico
+                }
             }
-        });
+            
+            // 2. Remover logs de atividade associados à tarefa
+            const deleteLogsSQL = `DELETE FROM atividade_logs WHERE task_id = ?`;
+            await new Promise((resolveLog, rejectLog) => {
+                db.run(deleteLogsSQL, [taskId], function(err) {
+                    if (err) {
+                        console.warn(`⚠️ [DELETE TASK] Erro ao remover logs: ${err.message}`);
+                        // Não bloqueia a exclusão por causa dos logs
+                        resolveLog();
+                    } else {
+                        console.log(`🗑️ [DELETE TASK] ${this.changes} logs de atividade removidos`);
+                        resolveLog();
+                    }
+                });
+            });
+            
+            // 3. Finalmente, deletar a tarefa
+            const sql = `DELETE FROM tarefas WHERE id = ?`;
+            db.run(sql, [taskId], function(err) {
+                if (err) {
+                    console.error(`❌ [DELETE TASK] Erro ao deletar tarefa ${taskId}: ${err.message}`);
+                    reject(err);
+                } else {
+                    console.log(`✅ [DELETE TASK] Tarefa ${taskId} deletada com sucesso (${this.changes} linhas afetadas)`);
+                    resolve({ deletedRows: this.changes });
+                }
+            });
+            
+        } catch (error) {
+            console.error(`❌ [DELETE TASK] Erro geral na exclusão da tarefa ${taskId}: ${error.message}`);
+            reject(error);
+        }
     });
 }
 

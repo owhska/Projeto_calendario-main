@@ -554,17 +554,49 @@ const Calendario = () => {
       return;
     }
     
-    if (window.confirm("Tem certeza de que deseja excluir esta tarefa?")) {
+    const task = tasks.find((t) => t.id === id);
+    const hasFiles = task?.comprovantes && task.comprovantes.length > 0;
+    
+    let confirmMessage = "Tem certeza de que deseja excluir esta tarefa?";
+    if (hasFiles) {
+      confirmMessage += `\n\nEsta tarefa possui ${task.comprovantes.length} arquivo(s) anexado(s) que também serão removidos permanentemente.`;
+    }
+    
+    if (window.confirm(confirmMessage)) {
       try {
-        const task = tasks.find((t) => t.id === id);
+        console.log('[DELETE] Iniciando exclusão da tarefa:', id);
+        console.log('[DELETE] Tarefa possui arquivos:', hasFiles);
+        
         await taskService.delete(id);
+        
+        console.log('[DELETE] Tarefa excluída com sucesso');
         await logActivity("delete_task", id, task?.titulo || "Tarefa");
+        
+        // Remover da lista local
         setTasks((prev) => prev.filter((t) => t.id !== id));
         setShowTaskDetails(false);
         setSelectedTask(null);
+        
+        alert("Tarefa excluída com sucesso!");
       } catch (error) {
         console.error("Erro ao excluir tarefa:", error);
-        alert("Erro ao excluir tarefa. Tente novamente.");
+        
+        // Melhor tratamento de erro
+        let errorMessage = "Erro ao excluir tarefa.";
+        
+        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+          errorMessage = "A operação demorou muito para responder. Isso pode ser devido ao servidor estar 'dormindo'. Tente novamente em alguns minutos.";
+        } else if (error.response?.status === 500) {
+          errorMessage = "Erro interno do servidor ao excluir a tarefa. Verifique se a tarefa possui arquivos anexados e tente novamente.";
+        } else if (error.response?.status === 404) {
+          errorMessage = "Tarefa não encontrada. Ela pode já ter sido excluída. Recarregue a página.";
+        } else if (error.response?.status === 403) {
+          errorMessage = "Você não tem permissão para excluir esta tarefa.";
+        } else if (!navigator.onLine) {
+          errorMessage = "Sem conexão com a internet. Verifique sua conexão e tente novamente.";
+        }
+        
+        alert(errorMessage);
       }
     }
   };
