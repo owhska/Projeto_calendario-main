@@ -7,12 +7,12 @@ const isProd = typeof window !== 'undefined' &&
 
 // base SEM /api. A rota /api entra só nos caminhos das requisições.
 const baseURL = isProd
-  ? window.location.origin              // ex.: https://projeto-calendario.onrender.com
+  ? window.location.origin              // ex.: https://algumurldaora.com
   : 'http://localhost:3001';            // dev local
 
 const axiosInstance = axios.create({
   baseURL: baseURL.replace(/\/+$/, ''),
-  timeout: 45000, // Aumentado para 45s devido ao cold start do Render
+  timeout: 45000, // EU dei uma aumentada pra ver se dava certo
 });
 
 // DEBUG opcional: logar base e caminho de cada request
