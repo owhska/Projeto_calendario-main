@@ -12,7 +12,7 @@ const baseURL = isProd
 
 const axiosInstance = axios.create({
   baseURL: baseURL.replace(/\/+$/, ''),
-  timeout: 15000,
+  timeout: 45000, // Aumentado para 45s devido ao cold start do Render
 });
 
 // DEBUG opcional: logar base e caminho de cada request

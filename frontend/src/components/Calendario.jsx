@@ -490,6 +490,10 @@ const Calendario = () => {
     };
 
     try {
+      // Mostrar loading para o usuário
+      const loadingAlert = "Atualizando tarefa... Isso pode demorar devido ao servidor. Aguarde...";  
+      console.log(loadingAlert);
+      
       const updatedTask = await taskService.update(editTask.id, taskData);
       await logActivity("edit_task", editTask.id, taskData.titulo);
       
@@ -524,8 +528,22 @@ const Calendario = () => {
       });
       alert("Tarefa atualizada com sucesso!");
     } catch (error) {
-      console.error("Erro ao atualizar tarefa:", error.message);
-      alert("Erro ao atualizar tarefa. Tente novamente.");
+      console.error("Erro ao atualizar tarefa:", error);
+      
+      // Melhor tratamento de erro baseado no tipo
+      let errorMessage = "Erro ao atualizar tarefa.";
+      
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMessage = "A operação demorou muito para responder. Isso pode ser devido ao servidor estar 'dormindo'. Tente novamente em alguns minutos.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Erro interno do servidor. Tente novamente em alguns minutos.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Tarefa não encontrada. Recarregue a página e tente novamente.";
+      } else if (!navigator.onLine) {
+        errorMessage = "Sem conexão com a internet. Verifique sua conexão e tente novamente.";
+      }
+      
+      alert(errorMessage);
     }
   };
 
