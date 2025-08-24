@@ -1594,6 +1594,14 @@ const Calendario = () => {
     }
   }, [activeView, isAdmin]);
 
+  // Recarregar tarefas sempre que trocar para Home ou Tasks
+  useEffect(() => {
+    if ((activeView === 'home' || activeView === 'tasks') && currentUser) {
+      console.log('[TASK REFRESH] Recarregando tarefas ao trocar para:', activeView);
+      fetchTasks();
+    }
+  }, [activeView, currentUser]);
+
   // Funções do Sistema Automatizado de Agenda Tributária
   const buscarObrigacoesAtualizadas = async () => {
     try {
