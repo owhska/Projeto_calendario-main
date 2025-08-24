@@ -283,36 +283,51 @@ app.delete("/api/usuarios/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log('Requisição DELETE /api/usuarios recebida para ID:', id);
+    console.log('🗑️ [DELETE] === INICIANDO EXCLUSÃO DE USUÁRIO ===');
+    console.log('🗑️ [DELETE] ID recebido:', id);
+    console.log('🗑️ [DELETE] Usuário autenticado:', req.user.uid);
+    console.log('🗑️ [DELETE] Headers:', req.headers);
     
     // Verificar se é admin
     const user = await getUserByUid(req.user.uid);
+    console.log('🗑️ [DELETE] Dados do usuário logado:', user);
+    
     if (!user || user.cargo !== 'admin') {
+      console.log('🗑️ [DELETE] ERRO: Usuário não é admin');
       return res.status(403).json({ error: "Apenas administradores podem remover usuários" });
     }
     
     // Não permitir que admin remova a si mesmo
     if (id === req.user.uid) {
+      console.log('🗑️ [DELETE] ERRO: Tentativa de auto-exclusão');
       return res.status(400).json({ error: "Você não pode remover sua própria conta" });
     }
     
     // Buscar usuário que será removido
+    console.log('🗑️ [DELETE] Buscando usuário alvo:', id);
     const targetUser = await getUserByUid(id);
+    console.log('🗑️ [DELETE] Dados do usuário alvo:', targetUser);
+    
     if (!targetUser) {
+      console.log('🗑️ [DELETE] ERRO: Usuário alvo não encontrado');
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
     
     // Remover usuário do banco de dados
+    console.log('🗑️ [DELETE] Executando exclusão no banco...');
     const result = await deleteUser(id);
+    console.log('🗑️ [DELETE] Resultado da exclusão:', result);
     
     if (result.deletedRows === 0) {
+      console.log('🗑️ [DELETE] ERRO: Nenhuma linha foi deletada');
       return res.status(404).json({ error: "Usuário não encontrado ou já foi removido" });
     }
     
-    console.log('Usuário removido com sucesso do banco:', id);
-    res.status(200).json({ message: "Usuário removido com sucesso" });
+    console.log('✅ [DELETE] Usuário removido com sucesso:', id);
+    res.status(200).json({ message: "Usuário removido com sucesso", deletedRows: result.deletedRows });
   } catch (error) {
-    console.error("Erro ao remover usuário:", error.message);
+    console.error('❌ [DELETE] Erro ao remover usuário:', error.message);
+    console.error('❌ [DELETE] Stack trace:', error.stack);
     res.status(500).json({ error: "Erro ao remover usuário: " + error.message });
   }
 });

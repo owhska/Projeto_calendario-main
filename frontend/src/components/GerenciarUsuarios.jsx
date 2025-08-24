@@ -76,12 +76,24 @@ const GerenciarUsuarios = () => {
     if (!window.confirm(`Tem certeza que deseja remover o usuário "${nomeUsuario}"?`)) return;
 
     try {
-      console.log('🗑️ Removendo usuário:', usuarioId);
-      await axiosInstance.delete(`/api/usuarios/${usuarioId}`);
+      console.log('🗑️ Removendo usuário:', { usuarioId, nomeUsuario });
+      console.log('🔍 URL da requisição:', `/api/usuarios/${usuarioId}`);
+      console.log('🔑 Token atual:', localStorage.getItem('authToken'));
+      
+      const response = await axiosInstance.delete(`/api/usuarios/${usuarioId}`);
+      console.log('✅ Resposta da exclusão:', response.data);
+      
       await carregarUsuarios();
       console.log('✅ Usuário removido com sucesso');
     } catch (err) {
       console.error('❌ Erro ao remover usuário:', err);
+      console.error('❌ Detalhes completos do erro:', {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        headers: err.response?.headers
+      });
       setError(`Erro ao remover usuário: ${err.response?.data?.error || err.message}`);
     }
   };
