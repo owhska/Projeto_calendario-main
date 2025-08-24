@@ -31,12 +31,20 @@ const GerenciarUsuarios = () => {
   const carregarUsuarios = async () => {
     try {
       setLoading(true);
-      const resp = await axiosInstance.get('/usuarios');
-      setUsuarios(resp.data || []);
+      console.log('🔄 Carregando usuários...');
+      const resp = await axiosInstance.get('/api/usuarios');
+      console.log('✅ Resposta da API:', resp.data);
+      
+      // Garantir que sempre seja um array
+      const usuariosData = Array.isArray(resp.data) ? resp.data : [];
+      setUsuarios(usuariosData);
       setError('');
+      console.log(`📋 ${usuariosData.length} usuários carregados`);
     } catch (err) {
-      console.error('Erro ao carregar usuários:', err);
-      setError('Erro ao carregar lista de usuários');
+      console.error('❌ Erro ao carregar usuários:', err);
+      console.error('❌ Detalhes do erro:', err.response?.data || err.message);
+      setUsuarios([]); // Garantir que seja sempre um array
+      setError(`Erro ao carregar lista de usuários: ${err.response?.data?.error || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -54,12 +62,13 @@ const GerenciarUsuarios = () => {
 
   const salvarEdicao = async (usuarioId) => {
     try {
-      await axiosInstance.put(`/usuarios/${usuarioId}`, editForm);
+      console.log('🔄 Salvando edição do usuário:', usuarioId, editForm);
+      await axiosInstance.put(`/api/usuarios/${usuarioId}`, editForm);
       await carregarUsuarios();
       cancelarEdicao();
     } catch (err) {
-      console.error('Erro ao atualizar usuário:', err);
-      setError('Erro ao atualizar usuário');
+      console.error('❌ Erro ao atualizar usuário:', err);
+      setError(`Erro ao atualizar usuário: ${err.response?.data?.error || err.message}`);
     }
   };
 
@@ -67,11 +76,13 @@ const GerenciarUsuarios = () => {
     if (!window.confirm(`Tem certeza que deseja remover o usuário "${nomeUsuario}"?`)) return;
 
     try {
-      await axiosInstance.delete(`/usuarios/${usuarioId}`);
+      console.log('🗑️ Removendo usuário:', usuarioId);
+      await axiosInstance.delete(`/api/usuarios/${usuarioId}`);
       await carregarUsuarios();
+      console.log('✅ Usuário removido com sucesso');
     } catch (err) {
-      console.error('Erro ao remover usuário:', err);
-      setError('Erro ao remover usuário');
+      console.error('❌ Erro ao remover usuário:', err);
+      setError(`Erro ao remover usuário: ${err.response?.data?.error || err.message}`);
     }
   };
 
